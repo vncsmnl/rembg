@@ -1,36 +1,48 @@
 import unittest
 from unittest.mock import patch
-from tkinter import Tk, PhotoImage
-from PIL import Image
+from io import StringIO
+from tkinter import Tk
+from tkinter import filedialog
+from PIL import Image, ImageTk
+import numpy as np
+from your_main_module import BackgroundRemovalApp
 
-import main  # Make sure to replace 'main' with the actual name of your script
+class TestBackgroundRemovalApp(unittest.TestCase):
 
-class TestImageBackgroundRemovalApp(unittest.TestCase):
     def setUp(self):
-        self.app = Tk()
-        self.app.withdraw()  # Hide the main window during tests
+        self.root = Tk()
+        self.app = BackgroundRemovalApp(self.root)
 
     def tearDown(self):
-        self.app.destroy()
+        self.root.destroy()
 
-    @patch("main.filedialog.askopenfilename", return_value="path/to/test_image.jpg")
-    @patch("main.rembg.remove", return_value=Image.new("RGBA", (100, 100), (255, 0, 0, 0)))
-    @patch("main.ImageTk.PhotoImage", return_value=PhotoImage())
-    @patch("main.label.config")
-    def test_remove_background(self, mock_label_config, mock_photo_image, mock_rembg_remove, mock_askopenfilename):
-        main.remove_background()
+    @patch('tkinter.filedialog.askopenfilename', return_value='test_image.jpg')
+    @patch('rembg.remove', return_value=np.zeros((100, 100, 4), dtype=np.uint8))
+    @patch('tkinter.filedialog.asksaveasfilename', return_value='output_image.png')
+    def test_remove_background(self, mock_open, mock_remove, mock_save):
+        self.app.remove_background()
+        self.assertTrue(mock_open.called)
+        self.assertTrue(mock_remove.called)
+        self.assertTrue(mock_save.called)
 
-        mock_askopenfilename.assert_called_once()
-        mock_rembg_remove.assert_called_once()
-        mock_label_config.assert_called_once()
+    def test_update_display(self):
+        image = Image.fromarray(np.zeros((100, 100, 4), dtype=np.uint8))
+        self.app.update_display(image)
+        self.assertIsInstance(self.app.label.cget('image'), ImageTk.PhotoImage)
 
-    @patch("main.remove_background")
-    @patch("main.Tk.bind")
-    def test_restart_program(self, mock_bind, mock_remove_background):
-        main.restart_program(None)
+    @patch('os.execl')
+    @patch('sys.executable', 'python')
+    @patch('sys.argv', ['script.py'])
+    def test_restart_program(self, mock_execl):
+        event = 'fake_event'
+        self.app.restart_program(event)
+        self.assertTrue(mock_execl.called)
 
-        mock_remove_background.assert_called_once()
-        mock_bind.assert_called_once_with("<F5>", main.restart_program)
+    @patch('sys.executable', 'python')
+    @patch('sys.argv', ['script.py'])
+    def test_restart_program_without_event(self):
+        self.app.restart_program(None)
+        # Without an event, it should still restart without raising any errors
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

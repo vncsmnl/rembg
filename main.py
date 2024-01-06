@@ -6,59 +6,65 @@ import numpy as np
 import sys
 import os
 
-def remove_background():
-    # Open a dialog to select an image
-    file_path = filedialog.askopenfilename()
+class BackgroundRemovalApp:
+    def __init__(self, root):
+        self.root = root
+        root.title("Remove Background")
 
-    if file_path:
-        try:
-            # Load the image using the PIL library
-            image = Image.open(file_path)
+        # Create a label to display the image
+        self.label = tk.Label(root)
+        self.label.pack(padx=10, pady=10)
 
-            # Convert the image to a format accepted by rembg
-            image_array = np.array(image)
-            output = rembg.remove(image_array)
+        # Create a button to initiate background removal and image saving
+        remove_button = tk.Button(root, text="Start Here", command=self.remove_background)
+        remove_button.pack(pady=10)
 
-            # Convert the rembg output back to a PIL image
-            output_image = Image.fromarray(output)
+        # Associate the F5 keypress event with the program restart function
+        root.bind("<F5>", self.restart_program)
 
-            # Save the image with the removed background
-            save_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG files", "*.png")])
-            if save_path:
-                output_image.save(save_path)
+    def remove_background(self):
+        # Open a dialog to select an image
+        file_path = filedialog.askopenfilename()
 
-            # Update the image displayed in the interface
-            update_display(output_image)
+        if file_path:
+            try:
+                # Load the image using the PIL library
+                image = Image.open(file_path)
 
-        except Exception as e:
-            # Handle errors, e.g., when the selected file is not an image
-            print(f"Error: {e}")
+                # Convert the image to a format accepted by rembg
+                image_array = np.array(image)
+                output = rembg.remove(image_array)
 
-def update_display(image):
-    # Update the displayed image in the interface
-    photo = ImageTk.PhotoImage(image)
-    label.config(image=photo)
-    label.image = photo
+                # Convert the rembg output back to a PIL image
+                output_image = Image.fromarray(output)
 
-def restart_program(event):
-    # Restart the program
-    python = sys.executable
-    os.execl(python, python, *sys.argv)
+                # Save the image with the removed background
+                save_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG files", "*.png")])
+                if save_path:
+                    output_image.save(save_path)
 
-# Create the main window
-root = tk.Tk()
-root.title("Remove Background")
+                # Update the image displayed in the interface
+                self.update_display(output_image)
 
-# Create a label to display the image
-label = tk.Label(root)
-label.pack(padx=10, pady=10)
+            except Exception as e:
+                # Handle errors, e.g., when the selected file is not an image
+                print(f"Error: {e}")
 
-# Create a button to initiate background removal and image saving
-remove_button = tk.Button(root, text="Start Here", command=remove_background)
-remove_button.pack(pady=10)
+    def update_display(self, image):
+        # Update the displayed image in the interface
+        photo = ImageTk.PhotoImage(image)
+        self.label.config(image=photo)
+        self.label.image = photo
 
-# Associate the F5 keypress event with the program restart function
-root.bind("<F5>", restart_program)
+    def restart_program(self, event):
+        # Restart the program
+        python = sys.executable
+        os.execl(python, python, *sys.argv)
 
-# Start the main GUI loop
-root.mainloop()
+def main():
+    root = tk.Tk()
+    app = BackgroundRemovalApp(root)
+    root.mainloop()
+
+if __name__ == "__main__":
+    main()
