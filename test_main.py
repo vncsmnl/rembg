@@ -5,7 +5,7 @@ from tkinter import Tk
 from tkinter import filedialog
 from PIL import Image, ImageTk
 import numpy as np
-from project import BackgroundRemovalApp
+from main import BackgroundRemovalApp
 
 class TestBackgroundRemovalApp(unittest.TestCase):
 
